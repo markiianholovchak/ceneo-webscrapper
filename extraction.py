@@ -1,6 +1,10 @@
 from bs4 import BeautifulSoup
 import requests
 
+
+class InvalidIdError(Exception):
+  pass
+
 def parseHtmlOpinions(htmlOpinions):
   '''
     Parses html code for each opinion into a dictionary
@@ -27,11 +31,11 @@ def parseHtmlOpinions(htmlOpinions):
     # extract review date and purchase date
     dateWritten = ""
     datePurchased = ""
-    if len(htmlOpinion.find_all("time")) == 2:
-      dateWritten = htmlOpinion.find_all("time")[0]['datetime']
-      datePurchased = htmlOpinion.find_all("time")[1]['datetime']
-    elif len(htmlOpinion.find_all("time")) == 1:
-      dateWritten = htmlOpinion.find_all("time")[0]['datetime']
+    if len(htmlOpinion.find("span", class_="user-post__published").find_all("time")) == 2:
+      dateWritten = htmlOpinion.find("span", class_="user-post__published").find_all("time")[0]['datetime']
+      datePurchased = htmlOpinion.find("span", class_="user-post__published").find_all("time")[1]['datetime']
+    elif len(htmlOpinion.find("span", class_="user-post__published").find_all("time")) == 1:
+      dateWritten = htmlOpinion.find("span", class_="user-post__published").find_all("time")[0]['datetime']
       
     opinion = {
       "id": htmlOpinion['data-entry-id'],
@@ -57,7 +61,7 @@ def getOpinions(productId):
   '''
   pageSoup = BeautifulSoup(requests.get(f'https://www.ceneo.pl/{productId}/opinie-1').text, 'lxml')
   if pageSoup.find('div', class_="error-page"):
-    return "Invalid product id!"
+    raise InvalidIdError("Invalid id!")
   if pageSoup.find('li', class_="reviews_new"):
     return "There are no opinions for this product"
   
