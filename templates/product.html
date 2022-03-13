@@ -1,39 +1,46 @@
 {% extends 'base.html'%} {% block head %}
-<title>Product {{productId}}</title>
+<title>Product {{product.id}}</title>
 {% endblock %} {% block body %}
+
 <div class="flex flex-col items-center px-5 py-10">
-	<table class="text-sm border-1 border-[#B8C0D8] text-center">
-		<tr>
-			<th>id</th>
-			<th>Author</th>
-			<th>Opinion</th>
-			<th>Rating</th>
-			<th>Confirmed purchase</th>
-			<th>Review date</th>
-			<th>Purchase date</th>
-			<th>Usefulness</th>
-			<th>Uselessness</th>
-			<th>Content</th>
-			<th>Pluses</th>
-			<th>Minuses</th>
-		</tr>
-		{% for opinion in product.opinions %}
-		<tr>
-			<td>{{opinion["id"]}}</td>
-			<td>{{opinion["author"]}}</td>
-			<td>{{opinion["recommendation"]}}</td>
-			<td>{{opinion["score"]}}</td>
-			<td>{{opinion["isPurchaseConfirmed"]}}</td>
-			<td>{{opinion["dateOpinionWritten"]}}</td>
-			<td>{{opinion["dateProductBought"]}}</td>
-			<td>{{opinion["votesYes"]}}</td>
-			<td>{{opinion["votesNo"]}}</td>
-			<td>{{opinion["content"]}}</td>
-			<td>{{opinion["pluses"]}}</td>
-			<td>{{opinion["minuses"]}}</td>
-		</tr>
-		{% endfor %}
-	</table>
+	<h2 class="text-xl font-bold text-[#344055] mb-4">
+		Product #{{product.id}}: {{product.name}}
+	</h2>
+	<form
+		action="{{url_for(request.endpoint, **request.view_args)}}"
+		class="pb-4"
+	>
+		<input
+			type="text"
+			name="filter"
+			placeholder="Insert filter text..."
+			class="border-2 border-[#B8C0D8] w-[15rem] text-xl py-1 rounded-md px-2 py-1"
+		/>
+		<select
+			name="column"
+			class="border-2 border-[#B8C0D8] text-xl py-1 rounded-md px-2 py-1"
+		>
+			<option value="id" selected>id</option>
+			<option value="author">Author</option>
+			<option value="recommendation">Recommendation</option>
+			<option value="score">Score</option>
+			<option value="isPurchaseConfirmed">Confirmed purchase</option>
+			<option value="dateOpinionWritten">Review date</option>
+			<option value="dateProductBought">Purchase date</option>
+			<option value="votesYes">Usefulness</option>
+			<option value="votesNo">Uselessness</option>
+			<option value="content">Content</option>
+			<option value="upsides">Upsides</option>
+			<option value="downsides">Downsides</option>
+		</select>
+		<button
+			type="submit"
+			class="bg-[#4392F1] py-1 px-5 text-xl text-[#ffffff] rounded-md inline-block active:scale-90 transition-all duration-200"
+		>
+			Filter
+		</button>
+	</form>
+	<div class="text-sm text-center">{{ table }}</div>
 </div>
 
 {% endblock %}

@@ -5,16 +5,16 @@ def parseHtmlOpinions(htmlOpinions):
   '''
   opinions = []
   for htmlOpinion in htmlOpinions:
-    pluses = []
-    minuses = []
-    # extract all pluses and minuses
+    upsides = []
+    downsides = []
+    # extract all upsides and downsides
     for featuresColumn in htmlOpinion.find_all("div", class_="review-feature__col"):
       if featuresColumn.find('div', class_="review-feature__title").text == "Zalety":
         for feature in  featuresColumn.find_all("div", class_="review-feature__item"):
-          pluses.append(feature.text)
+          upsides.append(feature.text)
       elif featuresColumn.find('div', class_="review-feature__title").text == "Wady":
          for feature in  featuresColumn.find_all("div", class_="review-feature__item"):
-          minuses.append(feature.text)
+          downsides.append(feature.text)
     # extract recommendation
     recommendation = ""
     if htmlOpinion.find('span', class_="user-post__author-recomendation") and htmlOpinion.find('span', class_="user-post__author-recomendation").text.replace("\n", "") == "Polecam":
@@ -35,14 +35,14 @@ def parseHtmlOpinions(htmlOpinions):
       "author": htmlOpinion.find("span", class_="user-post__author-name").text.replace("\n", ""),
       "recommendation": recommendation,
       "score": htmlOpinion.find("span", class_='user-post__score-count').text,
-      "isPurchaseConfirmed": True if htmlOpinion.find('div', class_="review-pz") else False,
+      "isPurchaseConfirmed": "Yes" if htmlOpinion.find('div', class_="review-pz") else "No",
       "dateOpinionWritten": dateOpinionWritten,
       "dateProductBought": dateProductBought,
       "votesYes": htmlOpinion.find('button', class_="vote-yes")['data-total-vote'],
       "votesNo": htmlOpinion.find('button', class_="vote-no")['data-total-vote'],
       "content": htmlOpinion.find('div', class_="user-post__text").text,
-      "pluses": (",").join(pluses),
-      "minuses": (",").join(minuses)
+      "upsides": (",").join(upsides),
+      "downsides": (",").join(downsides)
     }
     opinions.append(opinion)
   return opinions

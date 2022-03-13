@@ -1,7 +1,7 @@
 import json
 
 class Opinion():
-  def __init__(self, id, author, recommendation, score, isPurchaseConfirmed, dateOpinionWritten, dateProductBought, votesYes, votesNo, content, pluses, minuses):
+  def __init__(self, id, author, recommendation, score, isPurchaseConfirmed, dateOpinionWritten, dateProductBought, votesYes, votesNo, content, upsides, downsides):
     self.id = id
     self.author = author
     self.recommendation = recommendation
@@ -12,8 +12,8 @@ class Opinion():
     self.votesYes = votesYes
     self.votesNo = votesNo
     self.content = content
-    self.pluses = pluses
-    self.minuses = minuses
+    self.upsides = upsides
+    self.downsides = downsides
     
   def getOpinionDictionary(self):
     opinionDictionary = {
@@ -27,7 +27,7 @@ class Opinion():
       "votesYes": self.votesYes,
       "votesNo": self.votesNo,
       "content": self.content,
-      "pluses": self.pluses,
-      "minuses": self.minuses
+      "upsides": self.upsides,
+      "downsides": self.downsides
     }
     return opinionDictionary

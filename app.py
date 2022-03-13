@@ -1,23 +1,31 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, Response, render_template, request, redirect, url_for, Response
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
+import pandas as pd
+import io
+
 
 from product import Product
 from customExceptions import InvalidIdError
+from sortableTable import SortableTable
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///products.db'
 db = SQLAlchemy(app)
 
 #
-# Todo: 
-# 1. Change pluses/minuses table to string 
+# Todo:
+# 1. Change upsides/downsides table to string 
 # 2. add productId field to each opinion
 #
 class CeneoProduct(db.Model):
   id = db.Column(db.String(20), nullable=False, primary_key=True)
   name = db.Column(db.String(50), nullable=False)
+  averageScore = db.Column(db.String(10))
   opinions = db.Column(db.String())
+  opinionsCount = db.Column(db.Integer)
+  upsidesCount = db.Column(db.Integer)
+  downsidesCount = db.Column(db.Integer)
   dateCreated = db.Column(db.DateTime, default=datetime.utcnow)
   
   def __repr__(self):
@@ -42,8 +50,15 @@ def extract():
       productId = int(request.form['productId'])
       newProduct = Product(productId)
       newProduct.extractInformation()
+      newProduct.getProductDetails()
       
-      newCeneoProduct = CeneoProduct(id=productId, name=newProduct.name, opinions=newProduct.getOpinionsJson())
+      newCeneoProduct = CeneoProduct(id=productId, 
+                                     name=newProduct.name,
+                                     opinions=newProduct.getOpinionsJson(),
+                                     averageScore=newProduct.averageScore,
+                                     opinionsCount=newProduct.productDetails["opinionsCount"],
+                                     upsidesCount=newProduct.productDetails["upsidesCount"],
+                                     downsidesCount=newProduct.productDetails["downsidesCount"],)
       try:
         db.session.add(newCeneoProduct)
         db.session.commit()
@@ -58,16 +73,33 @@ def extract():
   
 @app.route("/product/<int:id>")
 def product(id):
+  print(*request.view_args)
+  # 1. Get all url parameters
+  sortColumn = request.args.get('sort_by')
+  sortDirection = request.args.get("direction")
+  filterText = request.args.get('filter')
+  filterColumn = request.args.get("column")
+  
+  # 2. Fetch product from database by id and create a product object
   dbProduct = CeneoProduct.query.get_or_404(id) 
-  productToDisplay = Product(dbProduct.id)
-  productToDisplay.setOpinionsFromJson(dbProduct.opinions)
-  print(productToDisplay.opinions)
-  return render_template('product.html', product=productToDisplay)
+  productToDisplay = Product(dbProduct.id, dbProduct.name)
+  # 3. Create pandas dataframe to sort/filter opinions
+  opinionsDf = pd.read_json(dbProduct.opinions)
+  # 4. Sort and filter the opinions according to url arguments
+  if sortColumn and sortDirection:
+    productToDisplay.setOpinionsFromJson(opinionsDf.sort_values(sortColumn, ascending = True if sortDirection == 'asc' else False ).to_json(orient='records'))
+  elif filterText and filterColumn:
+    productToDisplay.setOpinionsFromJson(opinionsDf.loc[opinionsDf[filterColumn] == filterText].to_json(orient='records'))
+  else:
+    productToDisplay.setOpinionsFromJson(dbProduct.opinions)
+  
+  # 5. Create a sortable table object and render product's template
+  productTable = SortableTable(productToDisplay.opinions)
+  return render_template('product.html', product=productToDisplay, table=productTable)
   
 @app.route("/products-list")
 def productsList():
   products = CeneoProduct.query.order_by(CeneoProduct.dateCreated).all()
-  
   return render_template("productList.html", products=products)
   
 @app.route("/delete/<int:id>")
@@ -79,6 +111,33 @@ def delete(id):
     return redirect("/products-list")
   except:
     return "There was an issue deleting this product"
+  
+@app.route('/download-json/<int:id>')
+def downloadJson(id):
+  product = CeneoProduct.query.get_or_404(id)
+  return Response(product.opinions, mimetype="application/json",
+                  headers={'Content-Disposition':f'attachment;filename={id}.json'})
+    
+@app.route("/download-csv/<int:id>")
+def downloadCsv(id):
+  product = CeneoProduct.query.get_or_404(id)
+  df = pd.read_json(product.opinions)
+  opinionsCsv = df.to_csv()
+  return Response(opinionsCsv,
+                  headers={'Content-Disposition':f'attachment;filename={id}.csv'})
+  
+@app.route("/download-xlsx/<int:id>")
+def downloadXlsx(id):
+  product = CeneoProduct.query.get_or_404(id)
+  df = pd.read_json(product.opinions)
+  output = io.BytesIO()
+  df.to_excel(output)
+  xlsx_data = output.getvalue()
+
+  return Response(xlsx_data,
+                  headers={'Content-Disposition':f'attachment;filename={id}.xlsx'})
+  
+
 
 
 if __name__ == "__main__":
