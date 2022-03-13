@@ -29,12 +29,13 @@ def parseHtmlOpinions(htmlOpinions):
       dateProductBought = htmlOpinion.find("span", class_="user-post__published").find_all("time")[1]['datetime']
     elif len(htmlOpinion.find("span", class_="user-post__published").find_all("time")) == 1:
       dateOpinionWritten = htmlOpinion.find("span", class_="user-post__published").find_all("time")[0]['datetime']
-      
+    # Extract and parse score
+    score = htmlOpinion.find("span", class_='user-post__score-count').text.split('/')[0].replace(',', '.')
     opinion = {
       "id": htmlOpinion['data-entry-id'],
       "author": htmlOpinion.find("span", class_="user-post__author-name").text.replace("\n", ""),
       "recommendation": recommendation,
-      "score": htmlOpinion.find("span", class_='user-post__score-count').text,
+      "score": score,
       "isPurchaseConfirmed": "Yes" if htmlOpinion.find('div', class_="review-pz") else "No",
       "dateOpinionWritten": dateOpinionWritten,
       "dateProductBought": dateProductBought,

@@ -1,4 +1,3 @@
-import json
 
 class Opinion():
   def __init__(self, id, author, recommendation, score, isPurchaseConfirmed, dateOpinionWritten, dateProductBought, votesYes, votesNo, content, upsides, downsides):

@@ -3,6 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 import pandas as pd
 import io
+import json
 
 
 from product import Product
@@ -138,7 +139,14 @@ def downloadXlsx(id):
                   headers={'Content-Disposition':f'attachment;filename={id}.xlsx'})
   
 
-
+@app.route("/charts/<int:id>")
+def plots(id):
+  product = CeneoProduct.query.get_or_404(id)
+  df = pd.read_json(product.opinions)
+  firstChartData = df['recommendation'].value_counts().to_dict()
+  secondChartData = df['score'].value_counts().to_dict()
+  return render_template('charts.html', firstChartData=json.dumps(firstChartData), secondChartData=json.dumps(secondChartData))
+  
 
 if __name__ == "__main__":
   app.run(debug=True)
