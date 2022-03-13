@@ -1,0 +1,16 @@
+{% extends 'base.html'%} {% block head %}
+<title>Products list</title>
+{% endblock %} {% block body %}
+
+<div>
+	{% for product in products%}
+	<div class="bg-[#ffffff] shadow-lg w-max px-10 py-5">
+		<a class="text-xl font-bold text-[#344055]" href="/product/{{product.id}}"
+			>{{product.name}}</a
+		>
+		<a href="/delete/{{product.id}}">Delete</a>
+	</div>
+	{%endfor%}
+</div>
+
+{% endblock %}

@@ -1,0 +1,2 @@
+class InvalidIdError(Exception):
+  pass

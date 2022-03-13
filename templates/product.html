@@ -17,15 +17,15 @@
 			<th>Pluses</th>
 			<th>Minuses</th>
 		</tr>
-		{% for opinion in opinions %}
+		{% for opinion in product.opinions %}
 		<tr>
 			<td>{{opinion["id"]}}</td>
 			<td>{{opinion["author"]}}</td>
 			<td>{{opinion["recommendation"]}}</td>
-			<td>{{opinion["stars"]}}</td>
-			<td>{{opinion["confirmedPurchase"]}}</td>
-			<td>{{opinion["dateWritten"]}}</td>
-			<td>{{opinion["dateBought"]}}</td>
+			<td>{{opinion["score"]}}</td>
+			<td>{{opinion["isPurchaseConfirmed"]}}</td>
+			<td>{{opinion["dateOpinionWritten"]}}</td>
+			<td>{{opinion["dateProductBought"]}}</td>
 			<td>{{opinion["votesYes"]}}</td>
 			<td>{{opinion["votesNo"]}}</td>
 			<td>{{opinion["content"]}}</td>
