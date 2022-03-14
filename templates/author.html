@@ -1,0 +1,48 @@
+{% extends 'base.html'%} {% block head %}
+<title>Author</title>
+{% endblock %} {% block body %}
+<div class="flex flex-col items-center pb-10">
+	<div class="grid sm:grid-cols-2 items-center px-5 py-10">
+		<h2 class="text-4xl sm:text-left text-center font-semibold text-[#344055]">
+			Hey there, I'm <span class="text-[#4392F1]">Markiian Holovchak</span>
+			<br />
+			- the author of Scrap<span class="text-[#4392F1]">ify</span>
+		</h2>
+		<div class="p-20 sm:block hidden">
+			<img src="{{url_for('static', filename='img/illustration-2.svg')}}" />
+		</div>
+	</div>
+
+	<p class="text-xl font-light text-[#344055] w-[75%] text-center">
+		To begin with, I would like to say thank you for visiting my web page. Hope
+		you like it! Let me use this moment to give you some information about me!
+	</p>
+	<h3 class="text-2xl font-semibold text-[#344055] mt-5">
+		<span class="text-[#4392F1]">Who</span> am I?
+	</h3>
+	<p class="text-xl font-light text-[#344055] w-[75%] text-center">
+		I'm a first-year student of Applied Informatics at Krakow University of
+		Economics. I come from a small town on the west of Ukraine.
+	</p>
+	<h3 class="text-2xl font-semibold text-[#344055] mt-5">
+		<span class="text-[#4392F1]">Why</span> programming?
+	</h3>
+	<p class="text-xl font-light text-[#344055] w-[75%] text-center">
+		My journey with programming started at the beginning of 2019 whe I bought my
+		first course on udemy. At the beginning, it was frustrating and tiring but
+		as I was getting better, it was becoming more and more clear - what I want
+		to do in my life is programming. Now I can definitely say that I'm deeply in
+		love with it. For the time being my main field is Front-End development but
+		I would never give up my goal to become a Full-Stack developer.
+	</p>
+	<h3 class="text-2xl font-semibold text-[#344055] mt-5">
+		Do you <span class="text-[#4392F1]">only</span> code and program?
+	</h3>
+	<p class="text-xl font-light text-[#344055] w-[75%] text-center">
+		Of course not! For sure, programming is a crucial and inseparable part of my
+		life, but it is not the one thing I live for. I play tennis, read books,
+		cook, perform on stage and <span class="font-bold">TRAVEL!</span>
+	</p>
+</div>
+
+{% endblock %}

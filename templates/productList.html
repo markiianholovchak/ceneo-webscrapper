@@ -2,9 +2,9 @@
 <title>Products list</title>
 {% endblock %} {% block body %}
 
-<div class="grid sm:grid-cols-2 2xl:grid-cols-3 gap-4">
+<div class="grid sm:grid-cols-2 2xl:grid-cols-3 gap-4 grow py-10">
 	{% for product in products %}
-	<div class="bg-[#ffffff] shadow-lg px-10 py-5 relative">
+	<div class="bg-[#ffffff] shadow-lg px-10 py-5 relative h-max">
 		<a
 			href="/delete/{{product.id}}"
 			class="absolute top-4 right-4 hover:text-[#FE5F55] transition-all duration-200"

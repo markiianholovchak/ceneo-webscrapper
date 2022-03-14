@@ -74,7 +74,6 @@ def extract():
   
 @app.route("/product/<int:id>")
 def product(id):
-  print(*request.view_args)
   # 1. Get all url parameters
   sortColumn = request.args.get('sort_by')
   sortDirection = request.args.get("direction")
@@ -145,8 +144,12 @@ def plots(id):
   df = pd.read_json(product.opinions)
   firstChartData = df['recommendation'].value_counts().to_dict()
   secondChartData = df['score'].value_counts().to_dict()
-  return render_template('charts.html', firstChartData=json.dumps(firstChartData), secondChartData=json.dumps(secondChartData))
+  return render_template('charts.html', productId=product.id, firstChartData=json.dumps(firstChartData), secondChartData=json.dumps(secondChartData))
   
+@app.route('/author')
+def author():
+  return render_template('author.html')
+
 
 if __name__ == "__main__":
   app.run(debug=True)

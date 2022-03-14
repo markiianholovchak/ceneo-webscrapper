@@ -1,10 +1,10 @@
 {% extends 'base.html'%} {% block head %}
 <title>Scrapify | Extract and analize opinions!</title>
 {% endblock %} {% block body %}
-<div class="grid grid-cols-2 my-10 items-center px-5">
+<div class="grid sm:grid-cols-2 my-10 items-center px-5">
 	<!--cta section start-->
-	<div class="">
-		<h1 class="text-4xl font-bold text-[#344055]">
+	<div class="flex sm:items-start flex-col items-center">
+		<h1 class="text-4xl sm:text-left text-center font-bold text-[#344055]">
 			Extract opinions about your beloved products from Ceneo.pl
 		</h1>
 		<a
@@ -13,7 +13,7 @@
 			>Get started!</a
 		>
 	</div>
-	<div class="p-10">
+	<div class="p-10 sm:block hidden">
 		<img src="{{url_for('static', filename='img/illustration-1.svg')}}" />
 	</div>
 </div>
@@ -33,12 +33,13 @@
 		<span class="text-[#4392F1]">How</span> it was built?
 	</h2>
 	<p class="text-xl text-[#344055] w-[70%] text-center mt-2">
-		Scrapify was built using modern technologies, such as:
-		<ul class="py-5 flex text-[#344055]">
+		Scrapify was built using such frameworks and libraries as:
+		<ul class="py-5 flex flex-wrap justify-center text-[#344055]">
 			<li class="mr-4 text-2xl font-semibold">Flask</li>
 			<li class="mr-4 text-2xl font-semibold">TailwindCSS</li>
 			<li class="mr-4 text-2xl font-semibold">ChartJs</li>
 			<li class="mr-4 text-2xl font-semibold">Pandas</li>
+			<li class="mr-4 text-2xl font-semibold">Flask table</li>
 			<li class="text-2xl font-semibold">Beautiful Soup</li>
 		</ul>
 		
