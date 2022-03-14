@@ -46,7 +46,6 @@ class Product():
     return json.dumps(self.getOpinionsDictionaryList(), indent=4)
   
   def setOpinionsFromJson(self, jsonOpinions):
-    
     for opinion in json.loads(jsonOpinions):
       self.opinions.append(Opinion(*opinion.values()))
       
@@ -58,6 +57,7 @@ class Product():
     for row in df['upsides']:
       if row:
         upsidesCount += len(row.split(','))
+    
           
     # 2. Count number of downsides
     for row in df['downsides']:

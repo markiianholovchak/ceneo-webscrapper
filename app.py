@@ -7,7 +7,7 @@ import json
 
 
 from product import Product
-from customExceptions import InvalidIdError
+from customExceptions import InvalidIdError, ProductAlreadyExists
 from sortableTable import SortableTable
 
 app = Flask(__name__)
@@ -39,6 +39,12 @@ class CeneoProduct(db.Model):
 def index():
   return render_template('index.html')
 
+@app.route('/error-404')
+def erro404():
+  error = request.args.get("error", None)
+  return render_template('404.html', error=error)
+    
+
 @app.route("/extraction")
 def extraction():
   error = request.args.get("error", None)
@@ -49,6 +55,8 @@ def extract():
   if request.method == "POST":
     try:
       productId = int(request.form['productId'])
+      if CeneoProduct.query.get(productId):
+        raise ProductAlreadyExists()
       newProduct = Product(productId)
       newProduct.extractInformation()
       newProduct.getProductDetails()
@@ -65,86 +73,108 @@ def extract():
         db.session.commit()
         return redirect(f"/product/{productId}")
       except:
-        return "There was an issue in commiting to database"
+        return redirect(url_for('error-404', error="There was an issue in commiting to DataBase"))
         
     except InvalidIdError:
       return redirect(url_for('extraction', error="Invalid product id!"))
+    except ProductAlreadyExists:
+      return redirect(url_for('extraction', error="Information for this product has already been extracted!"))
+    except OverflowError:
+      return redirect(url_for('extraction', error="Invalid product id!"))
   else:
-    return redirect("/")
+    return redirect("/extraction")
   
 @app.route("/product/<int:id>")
 def product(id):
-  # 1. Get all url parameters
-  sortColumn = request.args.get('sort_by')
-  sortDirection = request.args.get("direction")
-  filterText = request.args.get('filter')
-  filterColumn = request.args.get("column")
-  
-  # 2. Fetch product from database by id and create a product object
-  dbProduct = CeneoProduct.query.get_or_404(id) 
-  productToDisplay = Product(dbProduct.id, dbProduct.name)
-  # 3. Create pandas dataframe to sort/filter opinions
-  opinionsDf = pd.read_json(dbProduct.opinions)
-  # 4. Sort and filter the opinions according to url arguments
-  if sortColumn and sortDirection:
-    productToDisplay.setOpinionsFromJson(opinionsDf.sort_values(sortColumn, ascending = True if sortDirection == 'asc' else False ).to_json(orient='records'))
-  elif filterText and filterColumn:
-    productToDisplay.setOpinionsFromJson(opinionsDf.loc[opinionsDf[filterColumn] == filterText].to_json(orient='records'))
-  else:
-    productToDisplay.setOpinionsFromJson(dbProduct.opinions)
-  
-  # 5. Create a sortable table object and render product's template
-  productTable = SortableTable(productToDisplay.opinions)
-  return render_template('product.html', product=productToDisplay, table=productTable)
+  try:
+    # 1. Get all url parameters
+    sortColumn = request.args.get('sort_by')
+    sortDirection = request.args.get("direction")
+    filterText = request.args.get('filter')
+    filterColumn = request.args.get("column")
+    
+    # 2. Fetch product from database by id and create a product object
+    dbProduct = CeneoProduct.query.get_or_404(id) 
+    productToDisplay = Product(dbProduct.id, dbProduct.name)
+    # 3. Create pandas dataframe to sort/filter opinions
+    opinionsDf = pd.read_json(dbProduct.opinions)
+    # 4. Sort and filter the opinions according to url arguments
+    if sortColumn and sortDirection:
+      productToDisplay.setOpinionsFromJson(opinionsDf.sort_values(sortColumn, ascending = True if sortDirection == 'asc' else False ).to_json(orient='records'))
+    elif filterText and filterColumn:
+      productToDisplay.setOpinionsFromJson(opinionsDf.loc[opinionsDf[filterColumn] == filterText].to_json(orient='records'))
+    else:
+      productToDisplay.setOpinionsFromJson(dbProduct.opinions)
+    
+    # 5. Create a sortable table object and render product's template
+    productTable = SortableTable(productToDisplay.opinions)
+    return render_template('product.html', product=productToDisplay, table=productTable)
+  except:
+    return redirect(url_for('error-404', error="There was an issue in loading product data!"))
   
 @app.route("/products-list")
 def productsList():
-  products = CeneoProduct.query.order_by(CeneoProduct.dateCreated).all()
-  return render_template("productList.html", products=products)
+  try:
+    products = CeneoProduct.query.order_by(CeneoProduct.dateCreated).all()
+    return render_template("productList.html", products=products)
+  except:
+    return redirect(url_for('error-404', error="There was an issue in loading products!"))
   
 @app.route("/delete/<int:id>")
 def delete(id):
-  productToDelete = CeneoProduct.query.get_or_404(id)
   try:
+    productToDelete = CeneoProduct.query.get_or_404(id)
     db.session.delete(productToDelete)
     db.session.commit()
     return redirect("/products-list")
   except:
-    return "There was an issue deleting this product"
+    return redirect(url_for('error-404', error="There was an issue in deleting this product!"))
   
 @app.route('/download-json/<int:id>')
 def downloadJson(id):
-  product = CeneoProduct.query.get_or_404(id)
-  return Response(product.opinions, mimetype="application/json",
-                  headers={'Content-Disposition':f'attachment;filename={id}.json'})
+  try:
+    product = CeneoProduct.query.get_or_404(id)
+    return Response(product.opinions, mimetype="application/json",
+                    headers={'Content-Disposition':f'attachment;filename={id}.json'})
+  except:
+    return redirect(url_for('error-404', error="There was an issue in downloading json!"))
     
 @app.route("/download-csv/<int:id>")
 def downloadCsv(id):
-  product = CeneoProduct.query.get_or_404(id)
-  df = pd.read_json(product.opinions)
-  opinionsCsv = df.to_csv()
-  return Response(opinionsCsv,
-                  headers={'Content-Disposition':f'attachment;filename={id}.csv'})
+  try:
+    product = CeneoProduct.query.get_or_404(id)
+    df = pd.read_json(product.opinions)
+    opinionsCsv = df.to_csv()
+    return Response(opinionsCsv,
+                    headers={'Content-Disposition':f'attachment;filename={id}.csv'})
+  except:
+    return redirect(url_for('error-404', error="There was an issue in downloading csv!"))
   
 @app.route("/download-xlsx/<int:id>")
 def downloadXlsx(id):
-  product = CeneoProduct.query.get_or_404(id)
-  df = pd.read_json(product.opinions)
-  output = io.BytesIO()
-  df.to_excel(output)
-  xlsx_data = output.getvalue()
-
-  return Response(xlsx_data,
-                  headers={'Content-Disposition':f'attachment;filename={id}.xlsx'})
+  try:
+    product = CeneoProduct.query.get_or_404(id)
+    df = pd.read_json(product.opinions)
+    output = io.BytesIO()
+    df.to_excel(output)
+    xlsx_data = output.getvalue()
+    return Response(xlsx_data,
+                    headers={'Content-Disposition':f'attachment;filename={id}.xlsx'})
+  except:
+    return redirect(url_for('error-404', error="There was an issue in downloading xlsx!"))
   
 
 @app.route("/charts/<int:id>")
 def plots(id):
-  product = CeneoProduct.query.get_or_404(id)
-  df = pd.read_json(product.opinions)
-  firstChartData = df['recommendation'].value_counts().to_dict()
-  secondChartData = df['score'].value_counts().to_dict()
-  return render_template('charts.html', productId=product.id, firstChartData=json.dumps(firstChartData), secondChartData=json.dumps(secondChartData))
+  try:
+    product = CeneoProduct.query.get_or_404(id)
+    df = pd.read_json(product.opinions)
+    firstChartData = df['recommendation'].value_counts().to_dict()
+    secondChartData = df['score'].value_counts().to_dict()
+    return render_template('charts.html', productId=product.id, firstChartData=json.dumps(firstChartData), secondChartData=json.dumps(secondChartData))
+  except:
+    return redirect(url_for('error-404', error="Not found!"))
+    
   
 @app.route('/author')
 def author():

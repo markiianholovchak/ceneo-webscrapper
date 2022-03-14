@@ -1,0 +1,13 @@
+{% extends 'base.html'%} {% block head %}
+<title>Error 404</title>
+{% endblock %} {% block body %}
+
+<div class="flex flex-col items-center justify-center grow">
+  <div class="h-[20rem]">
+    <img class="h-full w-full" src="{{url_for('static', filename='img/illustration-3.svg')}}" alt="404 page">
+  </div>
+	<h1 class=" mt-4 text-3xl font-bold text-[#344055]">{{error}}</h2>
+    <a href="/" class="bg-[#344055] py-2 px-10 text-2xl text-[#ffffff] rounded-md inline-block mt-4 active:scale-90 transition-all duration-200" type="submit">Homepage</a>
+</div>
+
+{% endblock %}
