@@ -5,7 +5,6 @@ import pandas as pd
 import io
 import json
 
-
 from product import Product
 from customExceptions import InvalidIdError, ProductAlreadyExists
 from sortableTable import SortableTable
@@ -19,9 +18,6 @@ class CeneoProduct(db.Model):
   name = db.Column(db.String(50), nullable=False)
   averageScore = db.Column(db.String(10))
   opinions = db.Column(db.String())
-  opinionsCount = db.Column(db.Integer)
-  upsidesCount = db.Column(db.Integer)
-  downsidesCount = db.Column(db.Integer)
   dateCreated = db.Column(db.DateTime, default=datetime.utcnow)
   
   def __repr__(self):
@@ -35,7 +31,7 @@ def index():
   return render_template('index.html')
 
 @app.route('/error404')
-def erro404():
+def error404():
   error = request.args.get("error", None)
   return render_template('404.html', error=error)
     
@@ -56,15 +52,11 @@ def extract():
         raise ProductAlreadyExists()
       newProduct = Product(productId)
       newProduct.extractInformation()
-      newProduct.getProductDetails()
       
       newCeneoProduct = CeneoProduct(id=productId, 
                                      name=newProduct.name,
                                      opinions=newProduct.getOpinionsJson(),
-                                     averageScore=newProduct.averageScore,
-                                     opinionsCount=newProduct.productDetails["opinionsCount"],
-                                     upsidesCount=newProduct.productDetails["upsidesCount"],
-                                     downsidesCount=newProduct.productDetails["downsidesCount"],)
+                                     averageScore=newProduct.averageScore)
       db.session.add(newCeneoProduct)
       db.session.commit()
       return redirect(f"/product/{productId}")
@@ -88,18 +80,15 @@ def product(id):
     filterText = request.args.get('filter')
     filterColumn = request.args.get("column")
     
-    # 2. Fetch product from database by id and create a product objects
+    # 2. Fetch product from database by id and create a product object
     dbProduct = CeneoProduct.query.get_or_404(id) 
-    productToDisplay = Product(dbProduct.id, dbProduct.name)
-    # 3. Create pandas dataframe to sort/filter opinions
-    opinionsDf = pd.read_json(dbProduct.opinions)
+    productToDisplay = Product(dbProduct.id, dbProduct.name, dbProduct.averageScore)
+    productToDisplay.setOpinionsFromJson(dbProduct.opinions)
     # 4. Sort and filter the opinions according to url arguments
     if sortColumn and sortDirection:
-      productToDisplay.setOpinionsFromJson(opinionsDf.sort_values(sortColumn, ascending = True if sortDirection == 'asc' else False ).to_json(orient='records'))
+      productToDisplay.sortOpinions(sortColumn, sortDirection)
     elif filterText and filterColumn:
-      productToDisplay.setOpinionsFromJson(opinionsDf.loc[opinionsDf[filterColumn] == filterText].to_json(orient='records'))
-    else:
-      productToDisplay.setOpinionsFromJson(dbProduct.opinions)
+      productToDisplay.filterOpinions(filterColumn, filterText)
     
     # 5. Create a sortable table object and render product's template
     productTable = SortableTable(productToDisplay.opinions, sort_by=sortColumn,sort_reverse=False if sortDirection == 'asc' else True)
@@ -110,8 +99,16 @@ def product(id):
 @app.route("/products-list")
 def productsList():
   try:
-    products = CeneoProduct.query.order_by(CeneoProduct.dateCreated).all()
-    return render_template("productList.html", products=products)
+    # 1. Get items from db
+    productsFromDb = CeneoProduct.query.order_by(CeneoProduct.dateCreated).all()
+    # 2. Get information for all products in db
+    productsInfos = []
+    for productFromDb in productsFromDb:
+      product = Product(productFromDb.id, productFromDb.name, productFromDb.averageScore)
+      product.setOpinionsFromJson(productFromDb.opinions)
+      productsInfos.append(product.getProductDetails())
+    
+    return render_template("productList.html", productsInfos=productsInfos)
   except:
     return redirect(url_for('error404', error="There was an issue in loading products!"))
   

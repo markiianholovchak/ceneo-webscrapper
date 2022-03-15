@@ -7,12 +7,11 @@ from opinion import Opinion
 from customExceptions import InvalidIdError
 
 class Product():
-  def __init__(self, id, name=""):
+  def __init__(self, id, name="", averageScore=0):
     self.id = id
     self.name = name
     self.opinions = []
-    self.averageScore = 0
-    self.productDetails = {}
+    self.averageScore = averageScore
     
   @staticmethod
   def extractName(productPageSoup):
@@ -20,7 +19,7 @@ class Product():
   
   @staticmethod
   def extractAverageScore(productPageSoup):
-    return productPageSoup.find("span", class_="product-review__score")['content']
+    return float(productPageSoup.find("span", class_="product-review__score")['content'])
   
   @staticmethod
   def extractOpinionsPages(productPageSoup):
@@ -66,9 +65,10 @@ class Product():
     return json.dumps(self.getOpinionsDictionaryList(), indent=4)
   
   def setOpinionsFromJson(self, jsonOpinions):
+    opinions = []
     for opinion in json.loads(jsonOpinions):
-      self.opinions.append(Opinion(*opinion.values()))
-      
+      opinions.append(Opinion(*opinion.values()))
+    self.opinions = opinions
   def getProductDetails(self):
     df = pd.read_json(self.getOpinionsJson())
     # 1. Count number of upsides
@@ -84,9 +84,23 @@ class Product():
       if row:
         downsidesCount += len(row.split(','))
           
-    productDetails = {
+    return {
+      "id": self.id,
+      "name": self.name,
+      "averageScore": self.averageScore,
       "opinionsCount": len(self.opinions),
       "upsidesCount": upsidesCount,
       "downsidesCount": downsidesCount
     }
-    self.productDetails = productDetails
+    
+  def sortOpinions(self, sortColumn, sortDirection):
+    opinionsDf = pd.read_json(self.getOpinionsJson())
+    sortedOpinions = opinionsDf.sort_values(sortColumn, ascending = True if sortDirection == 'asc' else False ).to_json(orient='records')
+    self.setOpinionsFromJson(sortedOpinions)
+    
+  def filterOpinions(self, filterColumn, filterText):
+    opinionsDf = pd.read_json(self.getOpinionsJson())
+    filteredOpinions = opinionsDf.loc[opinionsDf[filterColumn] == filterText].to_json(orient='records')
+    self.setOpinionsFromJson(filteredOpinions)
+      
+      

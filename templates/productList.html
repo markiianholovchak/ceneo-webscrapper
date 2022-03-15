@@ -3,41 +3,41 @@
 {% endblock %} {% block body %}
 
 <div class="grid sm:grid-cols-2 2xl:grid-cols-3 gap-4 grow py-10">
-	{% for product in products %}
+	{% for productInfo in productsInfos %}
 	<div class="bg-[#ffffff] shadow-lg px-10 py-5 relative h-max">
 		<a
-			href="/delete/{{product.id}}"
+			href="/delete/{{productInfo.id}}"
 			class="absolute top-4 right-4 hover:text-[#FE5F55] transition-all duration-200"
 			>Delete</a
 		>
 		<div class="text-xl flex flex-col">
-			Product #{{product.id}}:
+			Product #{{productInfo.id}}:
 			<a
-				href="/product/{{product.id}}"
+				href="/product/{{productInfo.id}}"
 				class="font-bold py-2 hover:text-[#4392F1] transition-all duration-200"
-				>{{product.name}}</a
+				>{{productInfo.name}}</a
 			>
 		</div>
 		<div class="flex flex-col font-light">
-			<span>Average Score: {{product.averageScore}}</span>
-			<span>Total Opinions: {{product.opinionsCount}}</span>
-			<span>Total Upsides: {{product.upsidesCount}}</span>
-			<span>Total Downsides: {{product.downsidesCount}}</span>
+			<span>Average Score: {{productInfo.averageScore}}</span>
+			<span>Total Opinions: {{productInfo.opinionsCount}}</span>
+			<span>Total Upsides: {{productInfo.upsidesCount}}</span>
+			<span>Total Downsides: {{productInfo.downsidesCount}}</span>
 		</div>
 		<div>
 			<a
 				class="bg-[#4392F1] py-2 px-4 text-md text-[#ffffff] rounded-md inline-block mt-4 active:scale-90 transition-all duration-200"
-				href="/download-json/{{product.id}}"
+				href="/download-json/{{productInfo.id}}"
 				>Download json</a
 			>
 			<a
 				class="bg-[#344055] py-2 px-4 text-md text-[#ffffff] rounded-md inline-block mt-4 active:scale-90 transition-all duration-200"
-				href="/download-csv/{{product.id}}"
+				href="/download-csv/{{productInfo.id}}"
 				>Download csv</a
 			>
 			<a
 				class="bg-[#FE5F55] py-2 px-4 text-md text-[#ffffff] rounded-md inline-block mt-4 active:scale-90 transition-all duration-200"
-				href="/download-xlsx/{{product.id}}"
+				href="/download-xlsx/{{productInfo.id}}"
 				>Download xls</a
 			>
 		</div>
