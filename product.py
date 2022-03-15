@@ -3,8 +3,6 @@ import requests
 import json
 import pandas as pd
 
-
-from helper import parseHtmlOpinions
 from opinion import Opinion
 from customExceptions import InvalidIdError
 
@@ -16,6 +14,29 @@ class Product():
     self.averageScore = 0
     self.productDetails = {}
     
+  @staticmethod
+  def extractName(productPageSoup):
+    return productPageSoup.find("h1", class_="product-top__product-info__name").text
+  
+  @staticmethod
+  def extractAverageScore(productPageSoup):
+    return productPageSoup.find("span", class_="product-review__score")['content']
+  
+  @staticmethod
+  def extractOpinionsPages(productPageSoup):
+    opinionsCount = int(productPageSoup.find('span', class_="product-review__qo").find('span').text)
+    return opinionsCount // 10 + 1 if opinionsCount % 10 != 0 else opinionsCount // 10
+  
+  @staticmethod
+  def extractOpinions(opinionsPageSoup):
+    # 1. Get HTML for opinions on current page
+    htmlOpinions = opinionsPageSoup.find_all('div', class_="js_product-review")
+    # 2. parse html Opinions
+    parsedOpinions = []
+    for htmlOpinion in htmlOpinions:
+      parsedOpinions.append(Opinion.parseHtmlOpinion(htmlOpinion))
+    return parsedOpinions
+    
   def extractInformation(self):
     # 1. Get html code for product page
     productPageSoup = BeautifulSoup(requests.get(f'https://www.ceneo.pl/{self.id}').text, 'lxml')
@@ -23,18 +44,17 @@ class Product():
       raise InvalidIdError("Invalid id!")
     if productPageSoup.find('li', class_="reviews_new"):
       return
-    self.name = productPageSoup.find("h1", class_="product-top__product-info__name").text
-    self.averageScore = productPageSoup.find("span", class_="product-review__score")['content']
-    temporaryOpinions = []
-    opinionsCount = int(productPageSoup.find('span', class_="product-review__qo").find('span').text)
-    opinionsPages = opinionsCount // 10 + 1 if opinionsCount % 10 != 0 else opinionsCount // 10
+    self.name = Product.extractName(productPageSoup)
+    self.averageScore = Product.extractAverageScore(productPageSoup)
+    opinionsPages = Product.extractOpinionsPages(productPageSoup)
+    parsedOpinions = []
     for i in range(1, opinionsPages + 1):
       opinionsPageSoup = BeautifulSoup(requests.get(f'https://www.ceneo.pl/{self.id}/opinie-{i}').text, 'lxml')
-      temporaryOpinions += parseHtmlOpinions(opinionsPageSoup.find_all('div', class_="js_product-review"))
+      parsedOpinions += Product.extractOpinions(opinionsPageSoup)
       
     # Create opinion objects and add them to product's opinions array
-    for temporaryOpinion in temporaryOpinions:
-      self.opinions.append(Opinion(*temporaryOpinion.values()))
+    for parsedOpinion in parsedOpinions:
+      self.opinions.append(Opinion(*parsedOpinion.values()))
       
   def getOpinionsDictionaryList(self):
       opinionsDictionaryList = []

@@ -14,11 +14,6 @@ app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///products.db'
 db = SQLAlchemy(app)
 
-#
-# Todo:
-# 1. Change upsides/downsides table to string 
-# 2. add productId field to each opinion
-#
 class CeneoProduct(db.Model):
   id = db.Column(db.String(20), nullable=False, primary_key=True)
   name = db.Column(db.String(50), nullable=False)
@@ -39,7 +34,7 @@ class CeneoProduct(db.Model):
 def index():
   return render_template('index.html')
 
-@app.route('/error-404')
+@app.route('/error404')
 def erro404():
   error = request.args.get("error", None)
   return render_template('404.html', error=error)
@@ -54,7 +49,9 @@ def extraction():
 def extract():
   if request.method == "POST":
     try:
-      productId = int(request.form['productId'])
+      productId = 0 if not request.form['productId'] else int(request.form['productId'])
+      if not productId:
+        raise InvalidIdError()
       if CeneoProduct.query.get(productId):
         raise ProductAlreadyExists()
       newProduct = Product(productId)
@@ -68,19 +65,17 @@ def extract():
                                      opinionsCount=newProduct.productDetails["opinionsCount"],
                                      upsidesCount=newProduct.productDetails["upsidesCount"],
                                      downsidesCount=newProduct.productDetails["downsidesCount"],)
-      try:
-        db.session.add(newCeneoProduct)
-        db.session.commit()
-        return redirect(f"/product/{productId}")
-      except:
-        return redirect(url_for('error-404', error="There was an issue in commiting to DataBase"))
-        
+      db.session.add(newCeneoProduct)
+      db.session.commit()
+      return redirect(f"/product/{productId}")
     except InvalidIdError:
       return redirect(url_for('extraction', error="Invalid product id!"))
     except ProductAlreadyExists:
       return redirect(url_for('extraction', error="Information for this product has already been extracted!"))
     except OverflowError:
       return redirect(url_for('extraction', error="Invalid product id!"))
+    except: 
+      return redirect(url_for('error404', error="There was an issue in commiting to DataBase"))
   else:
     return redirect("/extraction")
   
@@ -93,7 +88,7 @@ def product(id):
     filterText = request.args.get('filter')
     filterColumn = request.args.get("column")
     
-    # 2. Fetch product from database by id and create a product object
+    # 2. Fetch product from database by id and create a product objects
     dbProduct = CeneoProduct.query.get_or_404(id) 
     productToDisplay = Product(dbProduct.id, dbProduct.name)
     # 3. Create pandas dataframe to sort/filter opinions
@@ -107,10 +102,10 @@ def product(id):
       productToDisplay.setOpinionsFromJson(dbProduct.opinions)
     
     # 5. Create a sortable table object and render product's template
-    productTable = SortableTable(productToDisplay.opinions)
+    productTable = SortableTable(productToDisplay.opinions, sort_by=sortColumn,sort_reverse=False if sortDirection == 'asc' else True)
     return render_template('product.html', product=productToDisplay, table=productTable)
   except:
-    return redirect(url_for('error-404', error="There was an issue in loading product data!"))
+    return redirect(url_for('error404', error="There was an issue in loading product data!"))
   
 @app.route("/products-list")
 def productsList():
@@ -118,7 +113,7 @@ def productsList():
     products = CeneoProduct.query.order_by(CeneoProduct.dateCreated).all()
     return render_template("productList.html", products=products)
   except:
-    return redirect(url_for('error-404', error="There was an issue in loading products!"))
+    return redirect(url_for('error404', error="There was an issue in loading products!"))
   
 @app.route("/delete/<int:id>")
 def delete(id):
@@ -128,7 +123,7 @@ def delete(id):
     db.session.commit()
     return redirect("/products-list")
   except:
-    return redirect(url_for('error-404', error="There was an issue in deleting this product!"))
+    return redirect(url_for('error404', error="There was an issue in deleting this product!"))
   
 @app.route('/download-json/<int:id>')
 def downloadJson(id):
@@ -137,7 +132,7 @@ def downloadJson(id):
     return Response(product.opinions, mimetype="application/json",
                     headers={'Content-Disposition':f'attachment;filename={id}.json'})
   except:
-    return redirect(url_for('error-404', error="There was an issue in downloading json!"))
+    return redirect(url_for('error404', error="There was an issue in downloading json!"))
     
 @app.route("/download-csv/<int:id>")
 def downloadCsv(id):
@@ -148,7 +143,7 @@ def downloadCsv(id):
     return Response(opinionsCsv,
                     headers={'Content-Disposition':f'attachment;filename={id}.csv'})
   except:
-    return redirect(url_for('error-404', error="There was an issue in downloading csv!"))
+    return redirect(url_for('error404', error="There was an issue in downloading csv!"))
   
 @app.route("/download-xlsx/<int:id>")
 def downloadXlsx(id):
@@ -161,7 +156,7 @@ def downloadXlsx(id):
     return Response(xlsx_data,
                     headers={'Content-Disposition':f'attachment;filename={id}.xlsx'})
   except:
-    return redirect(url_for('error-404', error="There was an issue in downloading xlsx!"))
+    return redirect(url_for('error404', error="There was an issue in downloading xlsx!"))
   
 
 @app.route("/charts/<int:id>")
@@ -173,7 +168,7 @@ def plots(id):
     secondChartData = df['score'].value_counts().to_dict()
     return render_template('charts.html', productId=product.id, firstChartData=json.dumps(firstChartData), secondChartData=json.dumps(secondChartData))
   except:
-    return redirect(url_for('error-404', error="Not found!"))
+    return redirect(url_for('error404', error="Not found!"))
     
   
 @app.route('/author')
