@@ -4,6 +4,12 @@ Scrapify - project based on Flask framework that allows you to extract opinions 
 
 ![Homepage](https://github.com/markiianholovchak/ceneo-webscrapper/blob/media/home.png)
 
+![Extraction](https://github.com/markiianholovchak/ceneo-webscrapper/blob/media/extraction.png)
+
+![Product](https://github.com/markiianholovchak/ceneo-webscrapper/blob/media/product.png)
+
+![ProductList](https://github.com/markiianholovchak/ceneo-webscrapper/blob/media/productList.png)
+
 ## Used frameworks and libraries:
 
 1. Flask
