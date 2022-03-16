@@ -2,6 +2,7 @@ from bs4 import BeautifulSoup
 import requests
 import json
 import pandas as pd
+import io
 
 from opinion import Opinion
 from customExceptions import InvalidIdError
@@ -35,8 +36,23 @@ class Product():
     for htmlOpinion in htmlOpinions:
       parsedOpinions.append(Opinion.parseHtmlOpinion(htmlOpinion))
     return parsedOpinions
+  
+  @staticmethod    
+  def convertJson(jsonContent, dataFormat):
+    '''Convert json format to csv or xlsx'''
+    df = pd.read_json(jsonContent)
+    if dataFormat == "csv":
+      return df.to_csv()
+    elif dataFormat == "xlsx":
+      output = io.BytesIO()
+      df.to_excel(output)
+      return output.getvalue()
     
   def extractInformation(self):
+    '''
+    Extracts all product's opinions
+    '''
+    
     # 1. Get html code for product page
     productPageSoup = BeautifulSoup(requests.get(f'https://www.ceneo.pl/{self.id}').text, 'lxml')
     if productPageSoup.find('div', class_="error-page"):
@@ -56,20 +72,33 @@ class Product():
       self.opinions.append(Opinion(*parsedOpinion.values()))
       
   def getOpinionsDictionaryList(self):
+      '''
+      Returns opinions as dictionaries in a list
+      '''
       opinionsDictionaryList = []
       for opinion in self.opinions:
         opinionsDictionaryList.append(opinion.getOpinionDictionary())
       return opinionsDictionaryList
 
   def getOpinionsJson(self):
+    '''
+    Return json-formatted opinions
+    '''
     return json.dumps(self.getOpinionsDictionaryList(), indent=4)
   
   def setOpinionsFromJson(self, jsonOpinions):
+    '''
+    Converts opinions from json format to Opinion object format
+    '''
     opinions = []
     for opinion in json.loads(jsonOpinions):
       opinions.append(Opinion(*opinion.values()))
     self.opinions = opinions
+    
   def getProductDetails(self):
+    '''
+    Returns product's details: id, name, average score, opinions' count, upsides and downisides count
+    '''
     df = pd.read_json(self.getOpinionsJson())
     # 1. Count number of upsides
     upsidesCount = 0
@@ -94,13 +123,30 @@ class Product():
     }
     
   def sortOpinions(self, sortColumn, sortDirection):
+    '''
+    Sorts opinions depending on column and direction
+    '''
     opinionsDf = pd.read_json(self.getOpinionsJson())
-    sortedOpinions = opinionsDf.sort_values(sortColumn, ascending = True if sortDirection == 'asc' else False ).to_json(orient='records')
+    sortedOpinions = opinionsDf.sort_values(sortColumn, ascending = False if sortDirection == 'asc' else True ).to_json(orient='records')
     self.setOpinionsFromJson(sortedOpinions)
     
   def filterOpinions(self, filterColumn, filterText):
+    '''
+    Filters opinions depending on column and text
+    '''
     opinionsDf = pd.read_json(self.getOpinionsJson())
-    filteredOpinions = opinionsDf.loc[opinionsDf[filterColumn] == filterText].to_json(orient='records')
+    filteredOpinions = opinionsDf.loc[opinionsDf[filterColumn].astype(str).str.contains(filterText)].to_json(orient='records')
     self.setOpinionsFromJson(filteredOpinions)
+    
+  def getCountedColumnValuesDict(self, column):
+     '''
+     Counts how many of different values there are in column
+     Return dictionary with different values as keys and their count as values
+     '''
+     df = pd.read_json(self.getOpinionsJson())
+     return df[column].value_counts().to_dict()
+   
+ 
+   
       
       

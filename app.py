@@ -1,8 +1,7 @@
 from flask import Flask, Response, render_template, request, redirect, url_for, Response
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
-import pandas as pd
-import io
+
 import json
 
 from product import Product
@@ -135,8 +134,7 @@ def downloadJson(id):
 def downloadCsv(id):
   try:
     product = CeneoProduct.query.get_or_404(id)
-    df = pd.read_json(product.opinions)
-    opinionsCsv = df.to_csv()
+    opinionsCsv = Product.convertJson(product.opinions, "csv")
     return Response(opinionsCsv,
                     headers={'Content-Disposition':f'attachment;filename={id}.csv'})
   except:
@@ -146,11 +144,8 @@ def downloadCsv(id):
 def downloadXlsx(id):
   try:
     product = CeneoProduct.query.get_or_404(id)
-    df = pd.read_json(product.opinions)
-    output = io.BytesIO()
-    df.to_excel(output)
-    xlsx_data = output.getvalue()
-    return Response(xlsx_data,
+    opinionsXlsx = Product.convertJson(product.opinions, 'xlsx')
+    return Response(opinionsXlsx,
                     headers={'Content-Disposition':f'attachment;filename={id}.xlsx'})
   except:
     return redirect(url_for('error404', error="There was an issue in downloading xlsx!"))
@@ -159,10 +154,13 @@ def downloadXlsx(id):
 @app.route("/charts/<int:id>")
 def plots(id):
   try:
-    product = CeneoProduct.query.get_or_404(id)
-    df = pd.read_json(product.opinions)
-    firstChartData = df['recommendation'].value_counts().to_dict()
-    secondChartData = df['score'].value_counts().to_dict()
+    productFromDb = CeneoProduct.query.get_or_404(id)
+    product = Product(productFromDb.id, productFromDb.name, productFromDb.averageScore)
+    product.setOpinionsFromJson(productFromDb.opinions)
+    firstChartData = product.getCountedColumnValuesDict('recommendation')
+    print(firstChartData)
+    secondChartData = product.getCountedColumnValuesDict('score')
+    
     return render_template('charts.html', productId=product.id, firstChartData=json.dumps(firstChartData), secondChartData=json.dumps(secondChartData))
   except:
     return redirect(url_for('error404', error="Not found!"))
