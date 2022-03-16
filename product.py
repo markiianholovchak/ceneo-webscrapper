@@ -57,9 +57,9 @@ class Product():
     productPageSoup = BeautifulSoup(requests.get(f'https://www.ceneo.pl/{self.id}').text, 'lxml')
     if productPageSoup.find('div', class_="error-page"):
       raise InvalidIdError("Invalid id!")
+    self.name = Product.extractName(productPageSoup)
     if productPageSoup.find('li', class_="reviews_new"):
       return
-    self.name = Product.extractName(productPageSoup)
     self.averageScore = Product.extractAverageScore(productPageSoup)
     opinionsPages = Product.extractOpinionsPages(productPageSoup)
     parsedOpinions = []
@@ -99,28 +99,39 @@ class Product():
     '''
     Returns product's details: id, name, average score, opinions' count, upsides and downisides count
     '''
-    df = pd.read_json(self.getOpinionsJson())
-    # 1. Count number of upsides
-    upsidesCount = 0
-    downsidesCount = 0
-    for row in df['upsides']:
-      if row:
-        upsidesCount += len(row.split(','))
-    
-          
-    # 2. Count number of downsides
-    for row in df['downsides']:
-      if row:
-        downsidesCount += len(row.split(','))
-          
-    return {
-      "id": self.id,
-      "name": self.name,
-      "averageScore": self.averageScore,
-      "opinionsCount": len(self.opinions),
-      "upsidesCount": upsidesCount,
-      "downsidesCount": downsidesCount
-    }
+    if self.opinions:
+      
+      df = pd.read_json(self.getOpinionsJson())
+      # 1. Count number of upsides
+      upsidesCount = 0
+      downsidesCount = 0
+      for row in df['upsides']:
+        if row:
+          upsidesCount += len(row.split(','))
+      
+            
+      # 2. Count number of downsides
+      for row in df['downsides']:
+        if row:
+          downsidesCount += len(row.split(','))
+            
+      return {
+        "id": self.id,
+        "name": self.name,
+        "averageScore": self.averageScore,
+        "opinionsCount": len(self.opinions),
+        "upsidesCount": upsidesCount,
+        "downsidesCount": downsidesCount
+      }
+    else:
+      return {
+        "id": self.id,
+        "name": self.name,
+        "averageScore": 0,
+        "opinionsCount": 0,
+        "upsidesCount": 0,
+        "downsidesCount": 0
+      }
     
   def sortOpinions(self, sortColumn, sortDirection):
     '''

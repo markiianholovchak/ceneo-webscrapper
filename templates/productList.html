@@ -4,7 +4,9 @@
 
 <div class="grid sm:grid-cols-2 2xl:grid-cols-3 gap-4 h-max py-10">
 	{% for productInfo in productsInfos %}
-	<div class="bg-[#ffffff] shadow-lg px-10 py-5 relative h-[100%]">
+	<div
+		class="flex flex-col bg-[#ffffff] shadow-lg px-10 py-5 relative h-[100%]"
+	>
 		<a
 			href="/delete/{{productInfo.id}}"
 			class="absolute top-4 right-4 hover:text-[#FE5F55] transition-all duration-200"
@@ -24,7 +26,8 @@
 			<span>Total Upsides: {{productInfo.upsidesCount}}</span>
 			<span>Total Downsides: {{productInfo.downsidesCount}}</span>
 		</div>
-		<div>
+		<div class="grow"></div>
+		<div class="justify-self-end">
 			<a
 				class="bg-[#4392F1] py-2 px-4 text-md text-[#ffffff] rounded-md inline-block mt-4 active:scale-90 transition-all duration-200"
 				href="/download-json/{{productInfo.id}}"
