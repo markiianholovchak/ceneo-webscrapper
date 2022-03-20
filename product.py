@@ -16,11 +16,15 @@ class Product():
     
   @staticmethod
   def extractName(productPageSoup):
-    return productPageSoup.find("h1", class_="product-top__product-info__name").text
+    if productPageSoup.find("h1", class_="product-top__product-info__name"):
+      return productPageSoup.find("h1", class_="product-top__product-info__name").text
+    return ""
   
   @staticmethod
   def extractAverageScore(productPageSoup):
-    return float(productPageSoup.find("span", class_="product-review__score")['content'])
+    if productPageSoup.find("span", class_="product-review__score"):
+      return float(productPageSoup.find("span", class_="product-review__score")['content'])
+    return 0
   
   @staticmethod
   def extractOpinionsPages(productPageSoup):
@@ -58,9 +62,10 @@ class Product():
     if productPageSoup.find('div', class_="error-page"):
       raise InvalidIdError("Invalid id!")
     self.name = Product.extractName(productPageSoup)
+    self.averageScore = Product.extractAverageScore(productPageSoup)
+    print(self.averageScore)
     if productPageSoup.find('li', class_="reviews_new"):
       return
-    self.averageScore = Product.extractAverageScore(productPageSoup)
     opinionsPages = Product.extractOpinionsPages(productPageSoup)
     parsedOpinions = []
     for i in range(1, opinionsPages + 1):
@@ -72,13 +77,13 @@ class Product():
       self.opinions.append(Opinion(*parsedOpinion.values()))
       
   def getOpinionsDictionaryList(self):
-      '''
-      Returns opinions as dictionaries in a list
-      '''
-      opinionsDictionaryList = []
-      for opinion in self.opinions:
-        opinionsDictionaryList.append(opinion.getOpinionDictionary())
-      return opinionsDictionaryList
+    '''
+    Returns opinions as dictionaries in a list
+    '''
+    opinionsDictionaryList = []
+    for opinion in self.opinions:
+      opinionsDictionaryList.append(opinion.getOpinionDictionary())
+    return opinionsDictionaryList
 
   def getOpinionsJson(self):
     '''
@@ -127,7 +132,7 @@ class Product():
       return {
         "id": self.id,
         "name": self.name,
-        "averageScore": 0,
+        "averageScore": self.averageScore,
         "opinionsCount": 0,
         "upsidesCount": 0,
         "downsidesCount": 0
@@ -137,17 +142,19 @@ class Product():
     '''
     Sorts opinions depending on column and direction
     '''
-    opinionsDf = pd.read_json(self.getOpinionsJson())
-    sortedOpinions = opinionsDf.sort_values(sortColumn, ascending = False if sortDirection == 'asc' else True ).to_json(orient='records')
-    self.setOpinionsFromJson(sortedOpinions)
+    if(self.opinions):
+      opinionsDf = pd.read_json(self.getOpinionsJson())
+      sortedOpinions = opinionsDf.sort_values(sortColumn, ascending = False if sortDirection == 'asc' else True ).to_json(orient='records')
+      self.setOpinionsFromJson(sortedOpinions)
     
   def filterOpinions(self, filterColumn, filterText):
     '''
     Filters opinions depending on column and text
     '''
-    opinionsDf = pd.read_json(self.getOpinionsJson())
-    filteredOpinions = opinionsDf.loc[opinionsDf[filterColumn].astype(str).str.contains(filterText)].to_json(orient='records')
-    self.setOpinionsFromJson(filteredOpinions)
+    if(self.opinions):
+      opinionsDf = pd.read_json(self.getOpinionsJson())
+      filteredOpinions = opinionsDf.loc[opinionsDf[filterColumn].astype(str).str.contains(filterText)].to_json(orient='records')
+      self.setOpinionsFromJson(filteredOpinions)
     
   def getCountedColumnValuesDict(self, column):
      '''
