@@ -158,7 +158,6 @@ def plots(id):
     product = Product(productFromDb.id, productFromDb.name, productFromDb.averageScore)
     product.setOpinionsFromJson(productFromDb.opinions)
     firstChartData = product.getCountedColumnValuesDict('recommendation')
-    print(firstChartData)
     secondChartData = product.getCountedColumnValuesDict('score')
     
     return render_template('charts.html', productId=product.id, firstChartData=json.dumps(firstChartData), secondChartData=json.dumps(secondChartData))

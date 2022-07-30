@@ -63,7 +63,6 @@ class Product():
       raise InvalidIdError("Invalid id!")
     self.name = Product.extractName(productPageSoup)
     self.averageScore = Product.extractAverageScore(productPageSoup)
-    print(self.averageScore)
     if productPageSoup.find('li', class_="reviews_new"):
       return
     opinionsPages = Product.extractOpinionsPages(productPageSoup)
