@@ -46,7 +46,7 @@ To install and run the app:
 3. Create and activate virtual environment:
    1. `virtualenv environment_name`
    2. `source environment_name/bin/activate`
-4. Install needed packages: `pip3 install -r requirements.txt`
+4. Install needed packages: `pip install -r requirements.txt`
 5. `flask run`
 
 Happy coding!
